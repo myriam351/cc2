@@ -1,0 +1,220 @@
+---
+title: "CC2 - Écogénomique - Myriam FERBLANTIER - N°22000007"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+---
+
+
+```{r}
+library(Rcpp)
+library(dada2)
+```
+### Commentaire : Recharge des packages dada2 et Rcpp.
+
+
+
+```{r}
+path <- "~/CC2/donnees" # CHANGE ME to the directory containing the fastq files after unzipping.
+list.files(path)
+```
+### Commentaire : Retraçage du fichier de données.
+
+
+
+```{r}
+# Forward and reverse fastq filenames have format: SAMPLENAME_R1.fastq and SAMPLENAME_R2.fastq
+fnFs <- sort(list.files(path, pattern="_R1.fastq", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2.fastq", full.names = TRUE))
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(fnRs), "R"), '[', 1)
+```
+### Commentaire: Nous avons obtenus les listes correspondantes des fichiers fastaq pour les amorces Foward et Reverse.
+
+
+
+## Inspect read quality profiles
+```{r}
+plotQualityProfile(fnFs[1:2])
+```
+
+
+
+```{r}
+plotQualityProfile(fnRs[1:2])
+```
+###Commentaire: Inspection par contrôle qualité des amorces Foward et Reverse. On peut observer que les amorces Reverse présente un score de qualité qui diminue à un intervalle entre 200 et 250. En comparaison, on peut voir que pour les amorces Forward on a un bon score de qualité, avec une légère diminution vers le 250 ème cycle.
+
+
+
+## Filter and trim
+```{r}
+# Place filtered files in filtered/ subdirectory
+filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+names(filtFs) <- sample.names
+names(filtRs) <- sample.names
+```
+### Commentaire: Attributions des noms de fichiers pour les fichiers fastq.gz filtrés.
+
+
+
+```{r}
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(250,200), trimLeft = c(21,21),
+              maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE) # On Windows set multithread=FALSE
+head(out)
+```
+### Commentaire : Nous avons utilisé des paramètres de filtrage pour filtrer nos données (soit maxN=0, truncQ=2,trimLeft = c(21,21), rm.phix=TRUE, maxEE=2). Par exemple: Le paramètre maxEE définit le nombre maximum d’“erreurs attendues” autorisées dans une lecture.
+
+### Commentaire : On a sélectionné les amorces tronquées et on les a filtrés en précisent les zones (soit 250 à 200).
+
+
+
+## Learn the Error Rates
+```{r}
+errF <- learnErrors(filtFs, multithread=TRUE)
+```
+
+
+
+```{r}
+errR <- learnErrors(filtRs, multithread=TRUE)
+```
+### Commentaire : Ici on apprend via la méthode learnErrors les taux d’erreurs à partir des amorces. Pour les amorces Foward on a utilisé 3 échantillons et pour les Reverse on a utilisé 4 échantillons.
+
+
+
+```{r}
+plotErrors(errF, nominalQ=TRUE)
+```
+### Commentaire : On peut Visualiser des taux d’erreurs estimés, via la fonction plotErrors().
+
+
+
+## Sample Inference
+```{r}
+dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
+```
+### Commentaire : Visualisation des taux d’erreurs pour les Forward.
+
+
+
+```{r}
+dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
+```
+### Commentaire : Visualisation des taux d’erreurs pour les Reverse.
+
+
+
+```{r}
+dadaFs[[1]]
+```
+### Commentaire : Ici on a effectué une inspection des données, avec 1016 variantes de séquences à partir des séquences uniques de 39978 dans le premier échantillon.
+
+
+
+```{r}
+dadaFs[[3]]
+```
+### Commentaire : On a fait la même chose que précédemment, mais avec l’échantillon 3. On a effectué une inspection des données, avec 1170 variantes de séquences à partir des séquences uniques de 49703 dans le premier échantillon.
+
+
+
+## Merge paired reads
+```{r}
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
+```
+### Commentaire : Fusion des lectures d’amorces Forward et Reverse. Un alignement est effectué au préalable. Par exemple, pour le premier, 115473 paires de lectures (dans 4595 paires uniques) ont été fusionnées avec succès à partir de 140326 (dans 21160 paires) entrées.
+
+
+```{r}
+# Inspect the merger data.frame from the first sample
+head(mergers[[1]])
+```
+
+
+
+## Construct sequence table
+```{r}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab)
+```
+### Commentaire :Ici la fonction makeSequenceTable () permet de construire une table de séquences (analogue à une table OTU) à partir de la liste d'échantillons fournie.
+
+
+
+```{r}
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+```
+### Commentaire : Construction d’une table de variantes de séquences d’amplicon de 1 117 389.
+
+
+
+## Revome chimeras
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+```
+### Commentaire : On a identifié des séquences chimériques, en utilisant la fonction removeBimeraDenovo(). On a pu identifier 15 867 de chimère sur 17 389 de séquences.
+
+
+```{r}
+dim(seqtab.nochim)
+```
+### Commentaire : la fonction dim() permet de définir la dimension de objet.
+
+
+```{r}
+sum(seqtab.nochim)/sum(seqtab)
+```
+
+
+
+```{r}
+1-sum(seqtab.nochim)/sum(seqtab)
+```
+### Commentaire : Il y a 2.2 % de séquence chimérique dans notre séquence unique.
+
+
+
+## Track reads through the pipeline
+```{r}
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+head(track)
+```
+### Commentaire : Vérification de tout ce qu’on a fait depuis le début. Par exemple: on peut voir qu’on a conservé la majorité de nos lectures brutes.
+
+
+
+## Assign taxonomy
+```{bash}
+wget https://zenodo.org/record/3986799/files/silva_nr99_v138_train_set.fa.gz
+```
+### Commentaire : On a importé les données Silva.
+
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "~/CC2/silva_nr99_v138_train_set.fa.gz", multithread = TRUE)
+```
+### Commentaire : La fonction assignTaxonomy() met en œuvre l'algorithme du RDP Naive Bayesian Classifier.
+
+
+
+```{r}
+taxa.print <- taxa # Removing sequence rownames for display only
+rownames(taxa.print) <- NULL
+head(taxa.print)
+```
+### Commentaire : On a effectué l’assignement taxonomique en utilisant les données SILVA. Ensuite, on a examiné les affectations taxonomiques. Par exemple, on peut voir les différentes phyla, les classes, les ordres, les familles, les genres et les espèces.
+
+
+
+```{r}
+save.image(file = "02_stat-analysiscc2-with-DADA2_FinalENV")
+```
+### Commentaire : La fonction save.image () permet que les objets du fichier 02_stat-analysiscc2 soient sauvegardés. On va ensuite charger ce fichier de donnée dans un autre fichier 03_stat-analysiscc2 en utilisant la fonction load() par la suite.
