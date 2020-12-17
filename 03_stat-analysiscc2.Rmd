@@ -1,0 +1,177 @@
+---
+title: "CC2 Écogénomique - Myriam FERBLANTIER - N°22000007"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+---
+### Question 1 : Quelles sont les influences relative de la profondeur et de la saison sur la structure des communauté planctoniques de la rade de Brest
+### Question 2 : Quels sont les biomarqueurs de saison (hivers et été) ?
+
+
+
+## Bonus: Handoff to phyloseq
+```{r}
+load("02_stat-analysiscc2-with-DADA2_FinalENV")
+```
+### Commentaire : ici on a lié les données de Dada2 dans le fichier 02\_stat-analysis pour effectuer la suite des analyses.
+
+
+
+```{r}
+library(phyloseq)
+```
+
+
+
+```{r}
+library(Biostrings)
+```
+
+
+
+```{r}
+library(ggplot2)
+```
+### Commentaire : Ici on a importé directement dans notre fichier Phyloseq, les tableaux produits par le pipeline Dada2 (dans le fichier précédent). Et la recharge de certains packages a été effectué pour la suite de l'analyse des réusltats.
+
+
+
+```{r}
+theme_set(theme_bw())
+```
+### Commentaire : Ici on a utilisé la fonction theme_bw(). Il s’agit de thèmes complets qui contrôlent tout l’affichage des données.
+
+
+
+## Construire d'un simple échantillon de data.frame
+```{r}
+samples.out <- rownames(seqtab.nochim)
+profondeur <- sapply(strsplit(samples.out, "D"), `[`, 1)
+date <- substr(profondeur,0,11)
+samdf <- data.frame(Profondeur=profondeur, Date=date)
+samdf$Profondeur[samdf$Date>11] <- c("Fond","Median","Surface")
+samdf$Date[samdf$Profondeur>11] <- c("mars","sept")
+rownames(samdf) <- samples.out
+```
+### Commentaire : Construction d’un échantillon data.frame à partir de nos données. Par exemple, la fonction data.frame() permet de créer des cadres de données en couplant des collections de variables qui partagent de nombreuses propriétés de matrices et de listes.
+
+
+
+```{r}
+write.csv(samdf,"samdf.csv")
+```
+### Commentaire : Création d'un fichier csv., afin d'ordonner les différents paramètres (tels que les mois, et la profondeurd'échantillon).
+
+
+
+```{r}
+samdf <-read.table('~/CC2/samdf.csv', sep=',', header=TRUE, row.names=1)
+```
+### Commentaire : Ici on a importé notre jeu de données qu'on a construit par la suite et on le met dans l'objet samdf. Ainsi, ce fichier regroupe différentes informations sur nos échantillons. Cela permet de les descriminer pour les critères mois et profondeur d'échantillon.
+
+
+
+```{r}
+ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE), 
+               sample_data(samdf), 
+               tax_table(taxa))
+ps
+```
+### Commentaire : On regroupe dans un objet ps l’ensemble des objets (taxtab, samdf et seqtab) nous renseignant sur l’assignation taxonomique de chaque sequence et le nombre de sequence identifiés dans chacun des échantillons.
+
+
+
+```{r}
+plot_richness(ps, x="Date", measures=c("Shannon", "Simpson"), color="Profondeur",)
+```
+### Commentaire : L'indice de Simpson et Shannon prennne en compte la richesse et la régularité. En effet, ces deux indices permettent de mesurer la diversité spécifique des nos échantillons. Plus l'indice de Shannon et de Simpson sont élevés et plus on a une richesse importante ou une diversité importante.Comme on peut le voir, les communauté bactérienne sont plus diversifiés dans les fonds, en comparaison de la partie médiane ou encore en surface.On peut voir en Hiver (mars), qu'il y a une certaine répartition de la diversité en comparaison à l'Été (septembre). Nous pouvons émettre l'hypothèse qu'il pourrait avoir une potentielle corrélation de la diversité de la communauté bactérienne avec les fonds marins (toujours en comparaison aux parties médiane et surface).
+
+
+
+```{r}
+rank_names(ps)
+```
+### Commentaire : La fonction rank_names() permet de déterminer plus facilement les rangs taxonomiques disponibles dans l'objet "ps" de classe phyloseq donné.
+
+
+
+```{r}
+table(tax_table(ps)[, "Phylum"], exclude = NULL)
+```
+### Commentaire : La fonction tax_table() permet de construire et accéder à une table de noms taxonomiques, organisée avec des rangs en colonnes. On peut faire un petit classement. On peut voir que les phyla Proteobacteria sont plus nombreux avec 762. Ensuite, en seconde place, les Bacteroidota présente 230. Et en troisième place, on peut voir également que les Cyanobacteria sont à 148.
+
+
+
+```{r}
+ps <- subset_taxa(ps, !is.na(Phylum) & !Phylum %in% c("", "uncharacterized"))
+```
+### Commentaire : Il s'agit d'un emballage pratique autour de la fonction de sous-ensemble. Il est destiné à accélérer le sous-ensemble d'objets expérimentaux complexes avec un appel de fonction. 
+
+
+
+```{r}
+# Compute prevalence of each feature, store as data.frame
+prevdf = apply(X = otu_table(ps),
+               MARGIN = ifelse(taxa_are_rows(ps), yes = 1, no = 2),
+               FUN = function(x){sum(x > 0)})
+# Add taxonomy and total read counts to this data.frame
+prevdf = data.frame(Prevalence = prevdf,
+                    TotalAbundance = taxa_sums(ps),
+                    tax_table(ps))
+```
+### Commentaire : Ici on a déterminé la prévalence de chaque caractéristique qui est stocké dans la data.frame. De plus, on a ajouté la taxonomie et le nombre total de lectures à ces données.
+
+
+
+```{r}
+plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$Prevalence))})
+```
+### Commentaire : Plyr permet de séparer les différentes données (dont l'abondance et les phyla). On peut voir ici dans le tableau, l'estimation de chaque phyla. On peut voir que les phyla les plus abondants sont : Proteobacteria, Bacteroidota et Cyanobacteria, Marinimicrobia (SAR406 clade), Verrucomicrobiota. Ces derniers ont été classé selon le plus abondants au moins abondants. Cela confirme les résultats précédents.
+
+
+
+```{r}
+# Subset to the remaining phyla
+prevdf1 = subset(prevdf, Phylum %in% get_taxa_unique(ps, "Phylum"))
+ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
+  # Include a guess for parameter
+  geom_hline(yintercept = 0.05, alpha = 0.5, linetype = 2) +  geom_point(size = 2, alpha = 0.7) +
+  scale_x_log10() +  xlab("Total Abundance") + ylab("Prevalence [Frac. Samples]") +
+  facet_wrap(~Phylum) + theme(legend.position="none")
+```
+### Commentaire : Ici on a évaluer la prévalence de nos phyla sur l'abondance total.En effet, nous voyons des résultats similaires aux résultats précédents. On a toujours le classment : Proteobacteria, Bacteroidota et Cyanobacteria, Marinimicrobia (SAR406 clade), Verrucomicrobiota.
+
+
+```{r}
+pslog <- transform_sample_counts(ps, function(x) log(1 + x))
+out.wuf.log <- ordinate(pslog, method = "PCoA", distance = "bray")
+```
+### Commentaire : La fonction transform_sample_counts () permet de transformer les comptages d'échantillons d'une matrice d'abondance de taxons selon une fonction fournie.Les comptages de chaque échantillon sont transformés individuellement. Aucune interaction/comparaison échantillon-échantillon n'est possible par cette méthode.
+
+### Commentaire : La fonction ordinate() englobe plusieurs méthodes d'ordination. En effet, le type d'ordination dépend de l'argument de la méthode. Ici on a utilisé comme méthode d'ordination, PCoA et Bray-Curtis.
+
+
+```{r}
+evals <- out.wuf.log$values$Eigenvalues
+plot_ordination(pslog, out.wuf.log, color = "Profondeur", shape="Date") + labs(col = "Profondeur",shape= "Date")
+```
+### Commentaire : Nous pouvons observer sur ce graphique différents paramètres. En premier lieu, nous voyons différents formes de points qui correspondent aux saisons. Septembre correspond à l'été et Mars correspond à l'hiver. En second temps, nous pouvons voir différentes couleurs qui correspondent à la profondeur (tels que la surface, la médiane et le fond). L'axe 1 correspondrait à la distribution au sein d'une même saison et l'axe 2 correspondrait à la distribution entre les 2 saisons (dont l'été et l'hiver).
+
+
+
+```{r}
+top20 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
+ps.top20 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+ps.top20 <- prune_taxa(top20, ps.top20)
+plot_bar(ps.top20, x="Date", fill="Family") + facet_wrap(~Profondeur, scales="free_x")
+```
+
+
+
+```{r}
+top30 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
+ps.top30 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+ps.top30 <- prune_taxa(top30, ps.top30)
+plot_bar(ps.top30, x="Date", fill="Genus") + facet_wrap(~Profondeur, scales="free_x")
+```
