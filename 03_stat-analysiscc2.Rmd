@@ -143,6 +143,7 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
 ### Commentaire : Ici on a évaluer la prévalence de nos phyla sur l'abondance total.En effet, nous voyons des résultats similaires aux résultats précédents. On a toujours le classment : Proteobacteria, Bacteroidota et Cyanobacteria, Marinimicrobia (SAR406 clade), Verrucomicrobiota.
 
 
+
 ```{r}
 pslog <- transform_sample_counts(ps, function(x) log(1 + x))
 out.wuf.log <- ordinate(pslog, method = "PCoA", distance = "bray")
@@ -152,6 +153,8 @@ out.wuf.log <- ordinate(pslog, method = "PCoA", distance = "bray")
 ### Commentaire : La fonction ordinate() englobe plusieurs méthodes d'ordination. En effet, le type d'ordination dépend de l'argument de la méthode. Ici on a utilisé comme méthode d'ordination, PCoA et Bray-Curtis.
 
 
+
+### Répartition des communautés bactériennes en fonction des saisons et des profondeurs
 ```{r}
 evals <- out.wuf.log$values$Eigenvalues
 plot_ordination(pslog, out.wuf.log, color = "Profondeur", shape="Date") + labs(col = "Profondeur",shape= "Date")
@@ -165,18 +168,33 @@ plot_ordination(pslog, out.wuf.log, color = "Profondeur", shape="Date") + labs(c
 ### Commentaire : Nous pouvons émettre l'hypothèse que la saison influerait plus sur la répartition des communautés bactériennes.
 
 
+
+## Histogramme des abondances des familles de communautés bactériennes
 ```{r}
 top20 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
 ps.top20 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
 ps.top20 <- prune_taxa(top20, ps.top20)
 plot_bar(ps.top20, x="Date", fill="Family") + facet_wrap(~Profondeur, scales="free_x")
 ```
+### Commentaire : Cette histogramme présente l'abondance des familles de communautés bactériennes en fonction des profondeurs et des saisons (septembre et mars). Les différentes familles correspondents aux différents couleurs. 
+
+### Commentaire : Pour commencer, nous pouvons voir qu'il semblerait que la famille majoritaire (en terme d'abondance) serait la clade I pour les 2 saisons et pour les 3 différentes profondeurs. On peut voir également que la famille des Cyanobiaceaa est également majoritaire en été dans les profondeurs médiane et surface.
+
+### Commentaire : Nous pouvons émèttre l'hypothèse, que la profondeur influerait sur la diversité et l'abondance des communautés bactériennes.
 
 
 
+## Histogramme des abondances des genres de communautés bactériennes
 ```{r}
 top30 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
 ps.top30 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
 ps.top30 <- prune_taxa(top30, ps.top30)
 plot_bar(ps.top30, x="Date", fill="Genus") + facet_wrap(~Profondeur, scales="free_x")
 ```
+### Commentaire : Cette histogramme présente l'abondance des genres de communautés bactériennes en fonction des profondeurs et des saisons (septembre et mars). Les différentes familles correspondents aux différents couleurs. 
+
+
+### Commentaire : cette histogramme permet de préciser quel type de biomarqueurs qu'on pourrait utilisé dans les saisons. En effet, précédemment le même histogramme a été effectué avec les familles. Ici on a une précision qui est le genre. Donc un potentiel biomarqueurs pour les saisons.
+
+
+### Commentaire : 
