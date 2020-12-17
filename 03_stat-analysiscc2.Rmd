@@ -156,8 +156,13 @@ out.wuf.log <- ordinate(pslog, method = "PCoA", distance = "bray")
 evals <- out.wuf.log$values$Eigenvalues
 plot_ordination(pslog, out.wuf.log, color = "Profondeur", shape="Date") + labs(col = "Profondeur",shape= "Date")
 ```
-### Commentaire : Nous pouvons observer sur ce graphique différents paramètres. En premier lieu, nous voyons différents formes de points qui correspondent aux saisons. Septembre correspond à l'été et Mars correspond à l'hiver. En second temps, nous pouvons voir différentes couleurs qui correspondent à la profondeur (tels que la surface, la médiane et le fond). L'axe 1 correspondrait à la distribution au sein d'une même saison et l'axe 2 correspondrait à la distribution entre les 2 saisons (dont l'été et l'hiver).
+### Commentaire : Nous pouvons observer sur ce graphique différents paramètres. En premier lieu, nous voyons différents formes de points qui correspondent aux saisons. Septembre correspond à l'été et Mars correspond à l'hiver. En second temps, nous pouvons voir différentes couleurs qui correspondent à la profondeur (tels que la surface, la médiane et le fond). L'axe 2 correspondrait à la distribution au sein d'une même saison et l'axe 1 correspondrait à la distribution dans entre les 2 saisons (dont l'été et l'hiver).
 
+### Commentaire : Au niveau de l'axe 1, on peut qu'on a une certaine répartition des phyla au niveau des profondeurs. Par exemple, on peut voir que les phyla sont bien séparé selon les profondeurs. En -0.4 on a les phyla en surface, en -O,03 on a les phyla en médiane et en 0,05 on a les phyla en fond.
+
+### Commentaire : Au niveau de l'axe 2,  on peut voir que la répartition est un peu moins    marqué au sein d'une même saison.
+
+### Commentaire : Nous pouvons émettre l'hypothèse que la saison influerait plus sur la répartition des communautés bactériennes.
 
 
 ```{r}
