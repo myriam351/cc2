@@ -1,0 +1,14 @@
+---
+title: "CC2 Écogénomique - Myriam FERBLANTIER - N°22000007"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+---
+
+## Importation des données
+```{bash}
+wget https://pagesperso.univ-brest.fr/~maignien/teaching/M1-MFA/UE-Ecogenomique2/EcoG2_data_cc2.tar.gz
+tar xvzf EcoG2_data_cc2.tar.gz
+```
+
