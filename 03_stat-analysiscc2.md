@@ -128,9 +128,7 @@ rownames(samdf) <- samples.out
 
 ### Commentaire : Construction d’un échantillon data.frame à partir de nos données. Par exemple, la fonction data.frame() permet de créer des cadres de données en couplant des collections de variables qui partagent de nombreuses propriétés de matrices et de listes.
 
-``` r
-write.csv(samdf,"samdf.csv")
-```
+### write.csv(samdf,“samdf.csv”)
 
 ### Commentaire : Création d’un fichier csv., afin d’ordonner les différents paramètres (tels que les mois, et la profondeurd’échantillon).
 
@@ -158,7 +156,7 @@ ps
 plot_richness(ps, x="Date", measures=c("Shannon", "Simpson"), color="Profondeur",)
 ```
 
-![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 \#\#\# Commentaire : L’indice de Simpson et Shannon prennne en compte la
 richesse et la régularité. En effet, ces deux indices permettent de
 mesurer la diversité spécifique des nos échantillons. Plus l’indice de
@@ -200,7 +198,7 @@ table(tax_table(ps)[, "Phylum"], exclude = NULL)
     ##               Gemmatimonadota               Hydrogenedentes 
     ##                             7                             1 
     ##              Margulisbacteria Marinimicrobia (SAR406 clade) 
-    ##                            20                            78 
+    ##                            21                            77 
     ##                   Myxococcota                         NB1-j 
     ##                             5                             2 
     ##                  Nitrospinota                       PAUC34f 
@@ -210,7 +208,7 @@ table(tax_table(ps)[, "Phylum"], exclude = NULL)
     ##  SAR324 clade(Marine group B)              Thermoplasmatota 
     ##                            16                            18 
     ##             Verrucomicrobiota                          <NA> 
-    ##                            71                            12
+    ##                            72                            11
 
 ### Commentaire : La fonction tax\_table() permet de construire et accéder à une table de noms taxonomiques, organisée avec des rangs en colonnes. On peut faire un petit classement. On peut voir que les phyla Proteobacteria sont plus nombreux avec 762. Ensuite, en seconde place, les Bacteroidota présente 230. Et en troisième place, on peut voir également que les Cyanobacteria sont à 148.
 
@@ -252,8 +250,8 @@ plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$P
     ## 12                Fibrobacterota 2.500000    5
     ## 13               Gemmatimonadota 2.428571   17
     ## 14               Hydrogenedentes 1.000000    1
-    ## 15              Margulisbacteria 1.900000   38
-    ## 16 Marinimicrobia (SAR406 clade) 4.500000  351
+    ## 15              Margulisbacteria 1.904762   40
+    ## 16 Marinimicrobia (SAR406 clade) 4.545455  350
     ## 17                   Myxococcota 2.400000   12
     ## 18                         NB1-j 1.500000    3
     ## 19                  Nitrospinota 3.761905   79
@@ -262,7 +260,7 @@ plyr::ddply(prevdf, "Phylum", function(df1){cbind(mean(df1$Prevalence),sum(df1$P
     ## 22                Proteobacteria 4.300525 3277
     ## 23  SAR324 clade(Marine group B) 4.687500   75
     ## 24              Thermoplasmatota 2.722222   49
-    ## 25             Verrucomicrobiota 3.774648  268
+    ## 25             Verrucomicrobiota 3.750000  270
 
 ### Commentaire : Plyr permet de séparer les différentes données (dont l’abondance et les phyla). On peut voir ici dans le tableau, l’estimation de chaque phyla. On peut voir que les phyla les plus abondants sont : Proteobacteria, Bacteroidota et Cyanobacteria, Marinimicrobia (SAR406 clade), Verrucomicrobiota. Ces derniers ont été classé selon le plus abondants au moins abondants. Cela confirme les résultats précédents.
 
@@ -276,7 +274,7 @@ ggplot(prevdf1, aes(TotalAbundance, Prevalence / nsamples(ps),color=Phylum)) +
   facet_wrap(~Phylum) + theme(legend.position="none")
 ```
 
-![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 \#\#\# Commentaire : Ici on a évaluer la prévalence de nos phyla sur
 l’abondance total.En effet, nous voyons des résultats similaires aux
 résultats précédents. On a toujours le classment : Proteobacteria,
@@ -299,7 +297,7 @@ evals <- out.wuf.log$values$Eigenvalues
 plot_ordination(pslog, out.wuf.log, color = "Profondeur", shape="Date") + labs(col = "Profondeur",shape= "Date")
 ```
 
-![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 \#\#\# Commentaire : Nous pouvons observer sur ce graphique différents
 paramètres. En premier lieu, nous voyons différents formes de points qui
 correspondent aux saisons. Septembre correspond à l’été et Mars
@@ -324,7 +322,7 @@ ps.top20 <- prune_taxa(top20, ps.top20)
 plot_bar(ps.top20, x="Date", fill="Family") + facet_wrap(~Profondeur, scales="free_x")
 ```
 
-![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 \#\#\# Commentaire : Cette histogramme présente l’abondance des familles
 de communautés bactériennes en fonction des profondeurs et des saisons
 (septembre et mars). Les différentes familles correspondents aux
@@ -343,7 +341,7 @@ ps.top30 <- prune_taxa(top30, ps.top30)
 plot_bar(ps.top30, x="Date", fill="Genus") + facet_wrap(~Profondeur, scales="free_x")
 ```
 
-![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](03_stat-analysiscc2_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 \#\#\# Commentaire : Cette histogramme présente l’abondance des genres
 de communautés bactériennes en fonction des profondeurs et des saisons
 (septembre et mars). Les différentes familles correspondents aux
