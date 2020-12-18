@@ -58,9 +58,7 @@ rownames(samdf) <- samples.out
 
 
 
-```{r}
-write.csv(samdf,"samdf.csv")
-```
+### write.csv(samdf,"samdf.csv")
 ### Commentaire : Création d'un fichier csv., afin d'ordonner les différents paramètres (tels que les mois, et la profondeurd'échantillon).
 
 
