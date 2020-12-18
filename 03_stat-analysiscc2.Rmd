@@ -202,3 +202,4 @@ plot_bar(ps.top30, x="Date", fill="Genus") + facet_wrap(~Profondeur, scales="fre
 
 
 ### Commentaire : Nous pouvons utilisé comme biomarqueur de saison estivale le genre Synechococcus CC 9902. Au contraire, pour la saison hivernale, il est difficile d'obtenir un biomarqueurs intéressants, étant donné qu'on a une abondance assez répartie. On ne peut pas selectionner le genre Clade la, car il est également abondant en saison estivale.
+
